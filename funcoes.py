@@ -195,27 +195,20 @@ class funcoes:
 		return [Z_filtro, Z_trafo, Z_equivalente, Z_equivalenteC, X_somenteC, w_ressonancia]
 		
 	
-	def grandezas_inteiras(h, w, Z_trafo, Z_equivalente, Z_filtro, Z_base_trafo, h_principal, ih_principal,
-	                       tipo_de_filtro, R_filtro, L_filtro, C_filtro, V_fund, S_trafo_fund):
+	def grandezas_inteiras(hh, w, Z_trafo, Z_equivalente, Z_filtro, i_carga_inteiros, tipo_de_filtro, R_filtro, L_filtro, C_filtro, V_fund):
 		# --- somente os harmônicos inteiros
-		temp = np.where(np.mod(h, 1) == 0)[0]
+		temp = np.where(np.mod(hh, 1) == 0)[0]
 		indices_h_inteiro = np.zeros(len(temp) + 1, dtype=int)
 		indices_h_inteiro[1:len(indices_h_inteiro)] = temp
-		h_inteiros = h[indices_h_inteiro]
+		h_inteiros = hh[indices_h_inteiro]
 		w_inteiros = w[indices_h_inteiro]
 		# --- todas as impedâncias inteiras
 		Z_trafo_inteiros = Z_trafo[indices_h_inteiro]
 		Z_filtro_inteiros = Z_filtro[indices_h_inteiro]
 		Z_equivalente_inteiros = Z_equivalente[indices_h_inteiro]
 		# --- todas as correntes inteiras da carga ou fonte no caso de gerador
-		i_carga_inteiros = np.random.randint(0, 3, len(h_inteiros)) + 1j * np.random.randint(0, 2,
-		                                                                                           len(h_inteiros))
-		i_carga_inteiros = i_carga_inteiros * 0  # maneira elegante de zerar
-		i_base_trafo = S_trafo_fund / (np.sqrt(3) * V_fund)
-		i_carga_inteiros[h_principal] = ih_principal / 100 * i_base_trafo
-		i_carga_inteiros[1] = i_base_trafo
 		# --- tensão na barra comum já com o filtro instalado
-		v_queda_trafo_paralelo_com_filtro = i_carga_inteiros * Z_equivalente_inteiros
+		v_queda_trafo_paralelo_com_filtro = Z_equivalente_inteiros * i_carga_inteiros
 		v_barra_inteiros = v_queda_trafo_paralelo_com_filtro
 		v_barra_inteiros[1] = V_fund / (np.sqrt(3)) - v_queda_trafo_paralelo_com_filtro[1]
 		# --- corrente do filtro e do transformador
@@ -262,17 +255,14 @@ class funcoes:
 	
 	def potencias_eficazes(v_resistor_inteiros, v_indutor_inteiros, v_capacitor_inteiros, i_resistor_inteiros,
 	                       i_indutor_inteiros, i_filtro_inteiros):
-		potencia_eficaz_resistor = np.dot(v_resistor_inteiros, np.conjugate(i_resistor_inteiros))
-		potencia_eficaz_indutor = np.dot(v_indutor_inteiros, np.conjugate(i_indutor_inteiros))
-		potencia_eficaz_capacitor = np.dot(v_capacitor_inteiros, np.conjugate(i_filtro_inteiros))
-		potencia_eficaz_resistor = np.sqrt(potencia_eficaz_resistor)
-		potencia_eficaz_indutor = np.sqrt(potencia_eficaz_indutor)
-		potencia_eficaz_capacitor = np.sqrt(potencia_eficaz_capacitor)
+		potencia_eficaz_resistor = 3*np.dot(v_resistor_inteiros, np.conjugate(i_resistor_inteiros))
+		potencia_eficaz_indutor = 3*np.dot(v_indutor_inteiros, np.conjugate(i_indutor_inteiros))
+		potencia_eficaz_capacitor = 3*np.dot(v_capacitor_inteiros, np.conjugate(i_filtro_inteiros))
 		return [potencia_eficaz_resistor, potencia_eficaz_indutor, potencia_eficaz_capacitor]
 	
 	def potencias_inteiras(v_resistor_inteiros, v_indutor_inteiros, v_capacitor_inteiros, i_resistor_inteiros,
 	                       i_indutor_inteiros, i_capacitor_inteiros):
-		p_capacitor_inteiros = v_capacitor_inteiros * np.conjugate(i_capacitor_inteiros)
-		p_indutor_inteiros = v_indutor_inteiros * np.conjugate(i_indutor_inteiros)
-		p_resistor_inteiros = v_resistor_inteiros * np.conjugate(i_resistor_inteiros)
+		p_capacitor_inteiros = 3* v_capacitor_inteiros * np.conjugate(i_capacitor_inteiros)
+		p_indutor_inteiros = 3* v_indutor_inteiros * np.conjugate(i_indutor_inteiros)
+		p_resistor_inteiros = 3* v_resistor_inteiros * np.conjugate(i_resistor_inteiros)
 		return [p_resistor_inteiros, p_indutor_inteiros, p_capacitor_inteiros]
