@@ -1,11 +1,12 @@
 import streamlit as st
-# import cmath as cm
 # from engineering_notation import EngNumber
 from PIL import Image
 import numpy as np
 import pandas as pd
 import plotly.express as px
-# import matplotlib.pyplot as plt
+import xlsxwriter
+from io import BytesIO
+from dataclasses import dataclass
 
 
 class funcoes:
@@ -108,74 +109,6 @@ class funcoes:
 		st.plotly_chart(fig, use_container_width=True)
 		
 
-		# fig, ax = plt.subplots(figsize=(5, 2.5))
-		# ax.plot(hh, abs(ZZ_filtro / Z_base_trafo), label='filtro')
-		# ax.plot(hh, abs(ZZ_equivalente / Z_base_trafo), label='equivalente')
-		# ax.plot(hh, abs(ZZ_trafo / Z_base_trafo), label='trafo')
-		# ind_harmonico_a_filtrar = np.where(hh == hh_filtrar)
-		# limY = abs(ZZ_equivalente[ind_harmonico_a_filtrar])
-		# ax.set_ylim(-0.1, 3.1)
-		# ax.set_xlabel(r'Harmônico $[f/f_1]$')
-		# ax.set_ylabel(r'Impedância $\left[ \frac{Z}{Z_{base}} \right]$')
-		# ax.legend(fontsize=6)
-		# ax.grid(ls='dashed', lw=0.5)
-		# st.pyplot(fig)
-	
-	# def grafico_corrente(hh, ii_trafo, ii_filtro, ii_fonte):
-	# 	fig, ax = plt.subplots(figsize=(5, 2.5))
-	# 	ax.bar(hh - 0.5, abs(ii_fonte / ii_trafo[1]), label='total', width=0.5)
-	# 	ax.bar(hh, abs(ii_filtro / ii_trafo[1]), label='filtro', width=0.5)
-	# 	ax.bar(hh + 0.5, abs(ii_trafo / ii_trafo[1]), label='trafo', width=0.5)
-	# 	ax.set_xlabel(r'Harmônico $\left[\frac{f}{f_1}\right]$')
-	# 	ax.set_ylabel(r'Corrente $\left[\frac{i}{i_1}\right]$')
-	# 	ax.legend(fontsize=6)
-	# 	ax.grid(ls='dashed', lw=0.5)
-	# 	st.pyplot(fig)
-	
-	# def grafico_corrente_filtro(hh, i_resistor_inteiros, i_indutor_inteiros, i_capacitor_inteiros, i_fund):
-	# 	fig, ax = plt.subplots(figsize=(5, 2.5))
-	# 	ax.bar(hh - 0.5, abs(i_resistor_inteiros / i_fund), label='$i_R$', width=0.5)
-	# 	ax.bar(hh, abs(i_indutor_inteiros / i_fund), label='$i_L$', width=0.5)
-	# 	ax.bar(hh + 0.5, abs(i_capacitor_inteiros / i_fund), label='$i_C$', width=0.5)
-	# 	ax.set_xlabel(r'Harmônico $\left[\frac{f}{f_1}\right]$')
-	# 	ax.set_ylabel(r'Corrente $\left[\frac{i}{i_1}\right]$')
-	# 	ax.legend(fontsize=6)
-	# 	ax.grid(ls='dashed', lw=0.5)
-	# 	st.pyplot(fig)
-	
-	# def grafico_tensao_filtro(hh, v_resistor_inteiros, v_indutor_inteiros, v_capacitor_inteiros, V_fund):
-	# 	fig, ax = plt.subplots(figsize=(5, 2.5))
-	# 	ax.bar(hh - 0.5, np.sqrt(3) * abs(v_resistor_inteiros / V_fund), label='$v_R$', width=0.5)
-	# 	ax.bar(hh, np.sqrt(3) * abs(v_indutor_inteiros / V_fund), label='$v_L$', width=0.5)
-	# 	ax.bar(hh + 0.5, np.sqrt(3) * abs(v_capacitor_inteiros / V_fund), label='$v_C$', width=0.5)
-	# 	ax.set_xlabel(r'Harmônico $\left[\frac{f}{f_1}\right]$')
-	# 	ax.set_ylabel(r'Tensão $\left[\frac{v}{v_1}\right]$')
-	# 	ax.legend(fontsize=6)
-	# 	ax.grid(ls='dashed', lw=0.5)
-	# 	st.pyplot(fig)
-	
-	# grafico_tensao(h_inteiros, v_resistor_inteiros, v_capacitor_inteiros, v_indutor_inteiros)
-	# def grafico_tensao(hh, vv_resistor, vv_indutor, vv_capacitor):
-	# 	fig, ax = plt.subplots(figsize=(5, 2.5))
-	# 	ax.bar(hh - 0.33, np.abs(vv_resistor), label='resistor', width=0.30)
-	# 	ax.bar(hh, np.abs(vv_indutor), label='indutor', width=0.30)
-	# 	ax.bar(hh + 0.33, np.abs(vv_capacitor), label='capacitor', width=0.30)
-	# 	ax.set_xlabel(r'Harmônico $\left[\frac{f}{f_1}\right]$')
-	# 	ax.set_ylabel(r'Tensão $\left[\frac{v}{v_1}\right]$')
-	# 	ax.legend(fontsize=6)
-	# 	ax.grid(ls='dashed', lw=0.5)
-	# 	st.pyplot(fig)
-	
-	# def grafico_potencia_filtro(hh, p_resistor_inteiros, p_indutor_inteiros, p_capacitor_inteiros):
-	# 	fig, ax = plt.subplots(figsize=(5, 2.5))
-	# 	ax.bar(hh - 0.5, np.real(3 * p_resistor_inteiros / 1e6), label='resistor', width=0.5)
-	# 	ax.bar(hh, np.imag(3 * p_indutor_inteiros / 1e6), label='indutor', width=0.5)
-	# 	ax.bar(hh + 0.5, np.imag(3 * p_capacitor_inteiros / 1e6), label='capacitor', width=0.5)
-	# 	ax.set_xlabel(r'Harmônico $\left[\frac{f}{f_1}\right]$')
-	# 	ax.set_ylabel(r'Potência [MW] ou [MVAr]')
-	# 	ax.legend(fontsize=6)
-	# 	ax.grid(ls='dashed', lw=0.5)
-	# 	st.pyplot(fig)
 	
 	def impedancias(tipo_de_filtro, R_filtro, L_filtro, C_filtro, XFILTRO_fund, w, Z_trafo_fund, hh):
 		if tipo_de_filtro == "Sintonizado":
@@ -266,3 +199,15 @@ class funcoes:
 		p_indutor_inteiros = 3* v_indutor_inteiros * np.conjugate(i_indutor_inteiros)
 		p_resistor_inteiros = 3* v_resistor_inteiros * np.conjugate(i_resistor_inteiros)
 		return [p_resistor_inteiros, p_indutor_inteiros, p_capacitor_inteiros]
+		
+	def to_excel(df):
+		output = BytesIO()
+		writer = pd.ExcelWriter(output, engine='xlsxwriter')
+		df.to_excel(writer, index=False, sheet_name='Sheet1')
+		workbook = writer.book
+		worksheet = writer.sheets['Sheet1']
+		format1 = workbook.add_format({'num_format': '0.00'}) 
+		worksheet.set_column('A:A', None, format1)  
+		writer.save()
+		processed_data = output.getvalue()
+		return processed_data

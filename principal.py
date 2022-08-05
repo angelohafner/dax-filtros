@@ -11,6 +11,7 @@ import plotly.graph_objects as go
 
 
 
+
 ##################################################
 f_fund = 60
 w_fund = 2*np.pi*f_fund
@@ -88,9 +89,12 @@ with tab3:
     if uploaded_file is not None:
         df_correntes = pd.read_excel(uploaded_file)
 
+    
+    df_xlsx = funcoes.to_excel(df_correntes)
+    st.download_button(label='📥 Download do Modelo de Arquivo',
+                                data=df_xlsx ,
+                                file_name= 'df_modelo.xlsx')
 
-    # df_correntes = pd.read_excel('leitura_harmonicos_de_corrente.xlsx',sheet_name='Sheet1')    
-    # grafico_correntes_harm = px.bar(df_correntes, x="h", y="modulo", title='Correntes Harmônicas da Carga', labels={"h": "Harmônico", "modulo": "Corrente [Ampères]"})
     xxx = df_correntes['h'].to_numpy()
     yyy = df_correntes['modulo'].to_numpy()
     fig_pu =    go.Figure(data=[
