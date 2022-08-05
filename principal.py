@@ -24,15 +24,18 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(["⚙️ Filtro", "🔌Transformador", "�
 with tab1:
     st.markdown("## Filtro")
     col1_f, col2_f, col3_f = st.columns(3)
-    with col2_f:
-        h_principal = st.slider("Filtro para o harmônico", min_value=2, max_value=23, step=1, value=5)
-        dessintonia = 1e-2 * st.slider("Dessintonia em %", min_value=0, max_value=10, step=1, value=2)    
+    
+    with col3_f:
         imagem_filtroDAX = Image.open('./figs/Filtro_Fotografia.png')
         st.image(imagem_filtroDAX, caption='', width=400)
+    
     with col1_f:
+        tipo_de_filtro = st.radio("", ("Sintonizado", "Amortecido"))
         V_fund = 1e3 * st.slider("Tensão em kV", min_value=0.220, max_value=138.0, step=0.01, value=34.5)
         Q_reat_fund_filtro = 1e6 * st.slider("Reativos em MVAr", min_value=5.0, max_value=100.0, step=1.0, value=15.0)
-        
+        h_principal = st.slider("Filtro para o harmônico", min_value=2, max_value=23, step=1, value=5)
+        dessintonia = 1e-2 * st.slider("Dessintonia em %", min_value=0, max_value=10, step=1, value=2) 
+        Q0 = st.slider("Fator de Qualidade", min_value=1, max_value=140, step=1, value=80)
         XFILTRO_fund = V_fund ** 2 / Q_reat_fund_filtro
         h_dessintonia_quadrado = (h_principal * (1 - dessintonia)) ** 2
         XC_sobre_XL = h_dessintonia_quadrado
@@ -40,21 +43,22 @@ with tab1:
         XL_fund = XC_fund - XFILTRO_fund
         C_filtro = 1 / (w_fund * XC_fund)
         L_filtro = XL_fund / w_fund
-        
-        tipo_de_filtro = st.radio("", ("Sintonizado", "Amortecido"))
+        if tipo_de_filtro=="Sintonizado":
+            Z0 = np.sqrt(L_filtro / C_filtro)
+            R_filtro = Z0 / Q0
+        elif tipo_de_filtro=="Amortecido":
+            Z0 = np.sqrt(L_filtro / C_filtro)
+            R_filtro = Z0 * Q0
+        else:
+            pass            
+
+    with col2_f:    
         imagem_tipo_de_filtro = funcoes.selecao_da_imagem(tipo_de_filtro)
-        st.image(imagem_tipo_de_filtro, caption='', width=200)
-
-    with col3_f:
-        Q0 = st.slider("Fator de Qualidade", min_value=20, max_value=100, step=1, value=80)
-        ### Filtro Sintonizado ####
-        Z0 = np.sqrt(L_filtro / C_filtro)
-        R_filtro = Z0 / Q0
-
-    with col3_f:    
-        st.write("$R = $", EngNumber(R_filtro), "$\\Omega$")
-        st.write("$L = $", EngNumber(L_filtro), "${\\rm{H}}$")
-        st.write("$C = $", EngNumber(C_filtro), "${\\rm{H}}$")
+        st.image(imagem_tipo_de_filtro, caption='', width=300)
+    with col2_f:   
+        st.write("$\;\;\;\;\;\;\;\;\;\;\;\;R = $", EngNumber(R_filtro), "$\\Omega$")
+        st.write("$\;\;\;\;\;\;\;\;\;\;\;\;L = $", EngNumber(L_filtro), "${\\rm{H}}$")
+        st.write("$\;\;\;\;\;\;\;\;\;\;\;\;C = $", EngNumber(C_filtro), "${\\rm{H}}$")
         ### Filtro Amortecido ####
         ##########################
 with tab2:
@@ -116,7 +120,6 @@ with tab4:
     hh = np.linspace(0.1, 50.1, 501)
     hh =np.round(hh, 2)
     w = w_fund * hh
-    tipo_de_filtro = "Sintonizado"
     Z_filtro, Z_trafo, Z_equivalente, Z_equivalenteC, X_somenteC, w_ressonancia = funcoes.impedancias(tipo_de_filtro, R_filtro, L_filtro, C_filtro, XFILTRO_fund, w, Z_traf_fund, hh)
     my_array = np.zeros((len(hh),4))
     my_array[:,0] = np.transpose(hh)
@@ -126,7 +129,8 @@ with tab4:
     df = pd.DataFrame(my_array, columns=['hh', 'Filtro', 'Tranformador', 'Equivalente'] )
     fig = px.line(df, x="hh", y=['Filtro', 'Tranformador', 'Equivalente'], title='Impedância versus Frequência',
                     labels={'hh':'Harmônico',"value": "Impedância [pu]","variable": "Impedância [pu]"},)
-    fig.update_layout(yaxis_range=[0,5])
+    fig.update_layout(yaxis_range=[0, 4])
+    fig.update_layout(xaxis_range=[0, 3*h_principal])
     st.plotly_chart(fig)
     index_min = np.where(np.abs(Z_filtro) == np.min(np.abs(Z_filtro)))[0]
     st.write(r'Harmônico de mínima impedância do filtro em $h=$', hh[index_min][0])
@@ -205,7 +209,7 @@ with tab5:
     st.write("$P_R = $",                 EngNumber((abs(potencia_eficaz_resistor))) , "$\\rm{W}$"  )
     st.write("$Q_L = $",                 EngNumber((abs(potencia_eficaz_indutor)))  , "$\\rm{VAr}$"  )
     st.write("$Q_C = $",                 EngNumber((abs(potencia_eficaz_capacitor))), "$\\rm{VAr}$"  )
-    st.write("$\\dfrac{Q_C}{Q_{C1}} = $", EngNumber((abs(potencia_eficaz_capacitor)/Q_reat_fund_filtro)), "$\\rm{VAr}$"  )
+    st.write("$\\dfrac{Q_C}{Q_{C1}} = $", EngNumber((abs(potencia_eficaz_capacitor)/Q_reat_fund_filtro)), "$\\rm{pu}$"  )
     st.write(EngNumber(sobretensao_Angelo))
    
     fig = go.Figure()

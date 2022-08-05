@@ -176,7 +176,7 @@ class funcoes:
 	# 	ax.legend(fontsize=6)
 	# 	ax.grid(ls='dashed', lw=0.5)
 	# 	st.pyplot(fig)
-	#Z_filtro, Z_equivalente, Z_equivalenteC, X_somenteC, w_ressonancia = funcoes.impedancias(tipo_de_filtro, R_filtro, L_filtro, C_filtro, C_somenteC, w, hh, Z_trafo)
+	
 	def impedancias(tipo_de_filtro, R_filtro, L_filtro, C_filtro, XFILTRO_fund, w, Z_trafo_fund, hh):
 		if tipo_de_filtro == "Sintonizado":
 			Z_filtro = R_filtro + 1j * w * L_filtro + 1 / (1j * w * C_filtro)
