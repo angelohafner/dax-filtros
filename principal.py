@@ -6,9 +6,29 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 from engineering_notation import EngNumber
+from st_aggrid import AgGrid, GridOptionsBuilder
 import cmath as cm
 import plotly.graph_objects as go
+# ===================================================================================
 
+def show_grid(df_correntes):
+
+    gb = GridOptionsBuilder.from_dataframe(df_correntes)
+    gb.configure_default_column(editable=True)
+    grid_table = AgGrid(
+        df_correntes,
+        height=400,
+        gridOptions=gb.build(),
+        fit_columns_on_grid_load=True,
+        allow_unsafe_jscode=True,
+    )
+    return grid_table
+
+def update(grid_table):
+    grid_table_df = pd.DataFrame(grid_table['data'])
+    grid_table_df.to_csv('leitura_harmonicos_de_corrente.csv', index=False)
+
+# ===================================================================================
 
 imagem_logoDAX = Image.open('./figs/logo-dax-otimizada.webp')
 st.sidebar.image(imagem_logoDAX, caption='', width=100)
@@ -32,12 +52,12 @@ with tab1:
         st.image(imagem_filtroDAX, caption='', width=400)
     
     with col1_f:
-        tipo_de_filtro = st.radio("", ("Tipo C","Sintonizado", "Amortecido"))
-        V_fund = 1e3 * st.slider("Tensão em kV", min_value=0.220, max_value=138.0, step=0.01, value=34.5)
-        Q_reat_fund_filtro = 1e6 * st.slider("Reativos em MVAr", min_value=0.1, max_value=100.0, step=0.01, value=15.0)
-        h_principal = st.slider("Filtro para o harmônico", min_value=2, max_value=23, step=1, value=5)
-        dessintonia = 1e-2 * st.slider("Dessintonia em %", min_value=0, max_value=10, step=1, value=2) 
-    Q0 = st.slider("Fator de Qualidade", min_value=0.1, max_value=140.0, step=0.1, value=16.0)
+        tipo_de_filtro =            st.radio("", ("Tipo C","Sintonizado", "Amortecido"))
+        V_fund =              1e3 * st.number_input("Tensão em kV", min_value=0.220, max_value=138.0, step=0.5, value=34.5)
+        Q_reat_fund_filtro =  1e6 * st.number_input("Reativos em MVAr", min_value=0.1, max_value=100.0, step=0.01, value=15.0)
+        h_principal =               st.number_input("Filtro para o harmônico", min_value=2, max_value=23, step=1, value=5)
+        dessintonia =        1e-2 * st.number_input("Dessintonia em %", min_value=0, max_value=10, step=1, value=2)
+        Q0 = st.number_input("Fator de Qualidade", min_value=0.1, max_value=140.0, step=1.0, value=80.0)
     [XFILTRO_fund, R_filtro, L_filtro, C_filtro, La, Ca] = funcoes.parametros_filtro(tipo_de_filtro, h_principal, dessintonia, Q0, V_fund, Q_reat_fund_filtro, w_fund)
 
     with col2_f:    
@@ -53,14 +73,14 @@ with tab2:
     st.sidebar.write('Impedância de curto-circuito.')
     col1_tr, col2_tr = st.columns(2)
     with col1_tr:
-        R_trafo_percentual = 1e-2 * st.slider("Resistência %", min_value=0.0, max_value=20.0, step=0.5, value=1.00)
-        X_trafo_percentual = 1e-2 * st.slider("Reatância %", min_value=1.0, max_value=20.0, step=0.5, value=13.0)
-        S_trafo_fund       = 1e6  * st.slider('Potência Nominal em MVA: ', min_value=0.1, max_value=500., value=60.0, step=1.)
+        R_trafo_percentual = 1e-2 * st.number_input("Resistência %", min_value=0.0, max_value=20.0, step=0.5, value=1.00)
+        X_trafo_percentual = 1e-2 * st.number_input("Reatância %", min_value=1.0, max_value=20.0, step=0.5, value=13.0)
+        S_trafo_fund       = 1e6  * st.number_input('Potência Nominal em MVA: ', min_value=0.1, max_value=500., value=60.0, step=1.)
         Z_base_trafo = V_fund**2 / S_trafo_fund
         I_base_trafo = S_trafo_fund / (np.sqrt(3) * V_fund)
         Z_traf_fund = Z_base_trafo * (R_trafo_percentual + 1j*X_trafo_percentual)
         st.write("$V_{base} = $", EngNumber(V_fund), "$\\rm{V}$")
-        st.write("$I_{base} = $", EngNumber(V_fund), "$\\rm{A}$")
+        st.write("$I_{base} = $", EngNumber(I_base_trafo), "$\\rm{A}$")
         st.write("$Z_{base} = $", EngNumber(Z_base_trafo),"$\Omega$")
         st.write("$R_{trafo} = $", EngNumber(np.real(Z_traf_fund)), "$\Omega$")
         st.write("$L_{trafo} = $", EngNumber(np.imag(Z_traf_fund)/w_fund), "$\\rm{H}$")
@@ -70,18 +90,22 @@ with tab2:
         st.image(imagem_trafo, caption='', width=300)
 
 with tab3:
-    st.markdown("## Conteúdo Harmônico de Corrente da Carga")	    
-    df_correntes = pd.read_excel('leitura_harmonicos_de_corrente.xlsx',sheet_name='Sheet1')
-    uploaded_file = st.file_uploader("Choose a file")
-    if uploaded_file is not None:
-        df_correntes = pd.read_excel(uploaded_file)
+    st.markdown("## Conteúdo Harmônico de Corrente da Carga")
+    df_correntes = pd.read_csv("leitura_harmonicos_de_corrente.csv", header=0, dtype=np.float64)
+    grid_table = show_grid(df_correntes)
+    st.button("Update", on_click=update, args=[grid_table])
 
-    df_xlsx = funcoes.to_excel(df_correntes)
-    st.download_button(label='📥 Download do Modelo de Arquivo',
-                                data=df_xlsx ,
-                                file_name= 'df_modelo.xlsx')
+
+    # uploaded_file = st.file_uploader("Choose a file")
+    # if uploaded_file is not None:
+    #     df_correntes = pd.read_excel(uploaded_file)
+    #
+    # df_xlsx = funcoes.to_excel(df_correntes)
+    # st.download_button(label='📥 Download do Modelo de Arquivo',
+    #                             data=df_xlsx ,
+    #                             file_name= 'df_modelo.xlsx')
  
-    funcoes.grafico_de_correntes_entrada(df_correntes['h'].to_numpy(), df_correntes['modulo'].to_numpy(), I_base_trafo)
+    funcoes.grafico_de_correntes_entrada(df_correntes['Ordem [h]'].to_numpy(), df_correntes['Módulo [A]'].to_numpy(), I_base_trafo)
           
     
 with tab4:
@@ -96,10 +120,10 @@ with tab4:
 
 with tab5:
         
-    modulo = df_correntes['modulo']
-    fase = df_correntes['fase']
+    modulo = df_correntes['Módulo [A]']
+    fase = df_correntes['Fase [Graus]']
     i_carga_inteiros = modulo * np.exp(1j*fase)
-    I_modulo = df_correntes['modulo']
+    I_modulo = df_correntes['Módulo [A]']
     I_modulo_principal = modulo[5]    
     h_inteiros, i_trafo_inteiros, i_filtro_inteiros, i_carga_inteiros, v_barra_inteiros, i_resistor_inteiros, i_indutor_inteiros, i_capacitor_inteiros, v_resistor_inteiros, v_indutor_inteiros, v_capacitor_inteiros, i_La_inteiros, i_Ca_inteiros, v_La_inteiros, v_Ca_inteiros = funcoes.grandezas_inteiras(hh, w, Z_trafo, Z_equivalente, Z_filtro, i_carga_inteiros, tipo_de_filtro, R_filtro, L_filtro, C_filtro, V_fund, La, Ca)
 
