@@ -53,11 +53,11 @@ with tab1:
     
     with col1_f:
         tipo_de_filtro =            st.radio("", ("Tipo C","Sintonizado", "Amortecido"))
-        V_fund =              1e3 * st.number_input("Tensão em kV", min_value=0.220, max_value=138.0, step=0.5, value=34.5)
-        Q_reat_fund_filtro =  1e6 * st.number_input("Reativos em MVAr", min_value=0.1, max_value=100.0, step=0.01, value=15.0)
-        h_principal =               st.number_input("Filtro para o harmônico", min_value=2, max_value=23, step=1, value=5)
-        dessintonia =        1e-2 * st.number_input("Dessintonia em %", min_value=0, max_value=10, step=1, value=2)
-        Q0 = st.number_input("Fator de Qualidade", min_value=0.1, max_value=140.0, step=1.0, value=80.0)
+        V_fund =              1e3 * st.number_input("Tensão em kV",             min_value=0.220,    max_value=138.0, step=0.5,   value=34.5)
+        Q_reat_fund_filtro =  1e6 * st.number_input("Reativos em MVAr",         min_value=0.001,    max_value=100.0, step=0.001, value=15.0)
+        h_principal =               st.number_input("Filtro para o harmônico",  min_value=2,        max_value=23,    step=1,     value=5)
+        dessintonia =        1e-2 * st.number_input("Dessintonia em %",         min_value=0,        max_value=10,    step=1,     value=2)
+        Q0 = st.number_input("Fator de Qualidade",                              min_value=0.1,      max_value=140.0, step=1.0,   value=80.0)
     [XFILTRO_fund, R_filtro, L_filtro, C_filtro, La, Ca] = funcoes.parametros_filtro(tipo_de_filtro, h_principal, dessintonia, Q0, V_fund, Q_reat_fund_filtro, w_fund)
 
     with col2_f:    
@@ -92,8 +92,23 @@ with tab2:
 with tab3:
     st.markdown("## Conteúdo Harmônico de Corrente da Carga")
     df_correntes = pd.read_csv("leitura_harmonicos_de_corrente.csv", header=0, dtype=np.float64)
-    grid_table = show_grid(df_correntes)
-    st.button("Update", on_click=update, args=[grid_table])
+    modulo = df_correntes['Módulo [A]']
+    fase = df_correntes['Fase [Graus]']
+    # nr_correntes_harm = st.number_input("Número de Harmônicos", min_value=0, max_value=5, step=1, value=1)
+    nr_correntes_harm = st.selectbox('Número de Harmônicos', (1, 2, 3, 4, 5, 6))
+    harm = np.zeros(nr_correntes_harm, dtype=int)
+    modu = np.zeros(nr_correntes_harm)
+    cols = st.columns(nr_correntes_harm)
+    for k in range(nr_correntes_harm):
+        ii = k
+        with cols[k]:
+            harm[k] = st.number_input("Harmônico [h]",       min_value=2,   max_value=50,    value=5,     step=1,   key="h_" + str(k))
+            modu[k] = st.number_input("Corrente [A]", min_value=0.0, max_value=999.9, value=100.0/(k+1), step=1.1, key="m_" + str(k))
+
+    modulo[harm[:]] = modu[:]
+
+    # grid_table = show_grid(df_correntes)
+    # st.button("Update", on_click=update, args=[grid_table])
 
 
     # uploaded_file = st.file_uploader("Choose a file")
@@ -119,9 +134,7 @@ with tab4:
     funcoes.grafico_modulo_impedancia(hh, Z_filtro, Z_trafo, Z_equivalente, Z_base_trafo, h_principal)
 
 with tab5:
-        
-    modulo = df_correntes['Módulo [A]']
-    fase = df_correntes['Fase [Graus]']
+
     i_carga_inteiros = modulo * np.exp(1j*fase)
     I_modulo = df_correntes['Módulo [A]']
     I_modulo_principal = modulo[5]    
