@@ -6,29 +6,33 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 from engineering_notation import EngNumber
-from st_aggrid import AgGrid, GridOptionsBuilder
+# from st_aggrid import AgGrid, GridOptionsBuilder
 import cmath as cm
 import plotly.graph_objects as go
+import base64
+# ===================================================================================
+def get_base64(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+def set_background(png_file):
+    bin_str = get_base64(png_file)
+    page_bg_img = '''
+    <style>
+    .stApp {
+    background-image: url("data:image/png;base64,%s");
+    background-size: cover;
+    }
+    </style>
+    ''' % bin_str
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+
+set_background('./figs/DAX_RGB-4.png')
+
 # ===================================================================================
 
-def show_grid(df_correntes):
 
-    gb = GridOptionsBuilder.from_dataframe(df_correntes)
-    gb.configure_default_column(editable=True)
-    grid_table = AgGrid(
-        df_correntes,
-        height=400,
-        gridOptions=gb.build(),
-        fit_columns_on_grid_load=True,
-        allow_unsafe_jscode=True,
-    )
-    return grid_table
-
-def update(grid_table):
-    grid_table_df = pd.DataFrame(grid_table['data'])
-    grid_table_df.to_csv('leitura_harmonicos_de_corrente.csv', index=False)
-
-# ===================================================================================
 
 imagem_logoDAX = Image.open('./figs/logo-dax-otimizada.webp')
 st.sidebar.image(imagem_logoDAX, caption='', width=100)
