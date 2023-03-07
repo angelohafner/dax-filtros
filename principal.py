@@ -1,41 +1,13 @@
-from dataclasses import dataclass
+# from dataclasses import dataclass
 import streamlit as st
 from PIL import Image
 from funcoes import funcoes
 import pandas as pd
-import plotly.express as px
+# import plotly.express as px
 import numpy as np
 from engineering_notation import EngNumber
 # from st_aggrid import AgGrid, GridOptionsBuilder
-import cmath as cm
-import plotly.graph_objects as go
-import base64
-# ===================================================================================
-def get_base64(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
 
-def set_background(png_file):
-    bin_str = get_base64(png_file)
-    page_bg_img = '''
-    <style>
-    .stApp {
-    background-image: url("data:image/png;base64,%s");
-    background-size: cover;
-    }
-    </style>
-    ''' % bin_str
-    st.markdown(page_bg_img, unsafe_allow_html=True)
-
-set_background('./figs/DAX_RGB-4.png')
-
-# ===================================================================================
-
-
-
-imagem_logoDAX = Image.open('./figs/logo-dax-otimizada.webp')
-st.sidebar.image(imagem_logoDAX, caption='', width=100)
 
 ##################################################
 f_fund = 60
@@ -56,38 +28,37 @@ with tab1:
         st.image(imagem_filtroDAX, caption='', width=400)
     
     with col1_f:
-        tipo_de_filtro =            st.radio("", ("Tipo C","Sintonizado", "Amortecido"))
+        tipo_de_filtro =            st.radio("Tipo de Filtro", ("Amortecido", "Sintonizado", "Tipo C"))
         V_fund =              1e3 * st.number_input("Tensão em kV",             min_value=0.220,    max_value=138.0, step=0.5,   value=34.5)
-        Q_reat_fund_filtro =  1e6 * st.number_input("Reativos em MVAr",         min_value=0.001,    max_value=100.0, step=0.001, value=15.0)
+        Q_reat_fund_filtro =  1e6 * st.number_input("Reativos em MVAr",         min_value=0.001,    max_value=100.0, step=0.001, value=4.0)
         h_principal =               st.number_input("Filtro para o harmônico",  min_value=2,        max_value=23,    step=1,     value=5)
         dessintonia =        1e-2 * st.number_input("Dessintonia em %",         min_value=0,        max_value=10,    step=1,     value=2)
-        Q0 = st.number_input("Fator de Qualidade",                              min_value=0.1,      max_value=140.0, step=1.0,   value=80.0)
+        Q0 =                        st.number_input("Fator de Qualidade",       min_value=0.1,      max_value=140.0, step=0.1,   value=50.0)
     [XFILTRO_fund, R_filtro, L_filtro, C_filtro, La, Ca] = funcoes.parametros_filtro(tipo_de_filtro, h_principal, dessintonia, Q0, V_fund, Q_reat_fund_filtro, w_fund)
 
-    with col2_f:    
+    with col2_f:
         imagem_tipo_de_filtro = funcoes.selecao_da_imagem(tipo_de_filtro)
-        st.image(imagem_tipo_de_filtro, caption='', width=300)
-        funcoes.texto(tipo_de_filtro)
-    with col2_f:   
+        # as imagens tem fundo branco, cuidar... fiz isso pra não precisar de ifs para ajustar o tamanho das figuras
+        # ou seja, os fundos são retângulos de mesmo tamanho.
+        st.image(imagem_tipo_de_filtro, caption='', width=250)
+    with col2_f:
         funcoes.escrita_RLC_filtro(R_filtro, L_filtro, C_filtro, La, Ca, tipo_de_filtro)
         
 with tab2:
     st.markdown("## Transformador")
-    st.sidebar.markdown("### Transformador")
-    st.sidebar.write('Impedância de curto-circuito.')
     col1_tr, col2_tr = st.columns(2)
     with col1_tr:
-        R_trafo_percentual = 1e-2 * st.number_input("Resistência %", min_value=0.0, max_value=20.0, step=0.5, value=1.00)
-        X_trafo_percentual = 1e-2 * st.number_input("Reatância %", min_value=1.0, max_value=20.0, step=0.5, value=13.0)
+        R_trafo_percentual = 1e-2 * st.number_input("Resistência %", min_value=0.0, max_value=20.0, step=0.5, value=0.12)
+        X_trafo_percentual = 1e-2 * st.number_input("Reatância %", min_value=1.0, max_value=20.0, step=0.5, value=6.1)
         S_trafo_fund       = 1e6  * st.number_input('Potência Nominal em MVA: ', min_value=0.1, max_value=500., value=60.0, step=1.)
         Z_base_trafo = V_fund**2 / S_trafo_fund
         I_base_trafo = S_trafo_fund / (np.sqrt(3) * V_fund)
         Z_traf_fund = Z_base_trafo * (R_trafo_percentual + 1j*X_trafo_percentual)
-        st.write("$V_{base} = $", EngNumber(V_fund), "$\\rm{V}$")
-        st.write("$I_{base} = $", EngNumber(I_base_trafo), "$\\rm{A}$")
-        st.write("$Z_{base} = $", EngNumber(Z_base_trafo),"$\Omega$")
-        st.write("$R_{trafo} = $", EngNumber(np.real(Z_traf_fund)), "$\Omega$")
-        st.write("$L_{trafo} = $", EngNumber(np.imag(Z_traf_fund)/w_fund), "$\\rm{H}$")
+        st.write("$V_{base} = $",  str(EngNumber(V_fund)), "$\\rm{V}$")
+        st.write("$I_{base} = $",  str(EngNumber(I_base_trafo)), "$\\rm{A}$")
+        st.write("$Z_{base} = $",  str(EngNumber(Z_base_trafo)),"$\Omega$")
+        st.write("$R_{trafo} = $", str(EngNumber(np.real(Z_traf_fund))), "$\Omega$")
+        st.write("$L_{trafo} = $", str(EngNumber(np.imag(Z_traf_fund)/w_fund)), "$\\rm{H}$")
 
     with col2_tr:
         imagem_trafo = Image.open('./figs/Transformador.jpg')
@@ -98,7 +69,6 @@ with tab3:
     df_correntes = pd.read_csv("leitura_harmonicos_de_corrente.csv", header=0, dtype=np.float64)
     modulo = df_correntes['Módulo [A]']
     fase = df_correntes['Fase [Graus]']
-    # nr_correntes_harm = st.number_input("Número de Harmônicos", min_value=0, max_value=5, step=1, value=1)
     nr_correntes_harm = st.selectbox('Número de Harmônicos', (1, 2, 3, 4, 5, 6))
     harm = np.zeros(nr_correntes_harm, dtype=int)
     modu = np.zeros(nr_correntes_harm)
@@ -110,27 +80,11 @@ with tab3:
             modu[k] = st.number_input("Corrente [A]", min_value=0.0, max_value=999.9, value=100.0/(k+1), step=1.1, key="m_" + str(k))
 
     modulo[harm[:]] = modu[:]
-
-    # grid_table = show_grid(df_correntes)
-    # st.button("Update", on_click=update, args=[grid_table])
-
-
-    # uploaded_file = st.file_uploader("Choose a file")
-    # if uploaded_file is not None:
-    #     df_correntes = pd.read_excel(uploaded_file)
-    #
-    # df_xlsx = funcoes.to_excel(df_correntes)
-    # st.download_button(label='📥 Download do Modelo de Arquivo',
-    #                             data=df_xlsx ,
-    #                             file_name= 'df_modelo.xlsx')
- 
     funcoes.grafico_de_correntes_entrada(df_correntes['Ordem [h]'].to_numpy(), df_correntes['Módulo [A]'].to_numpy(), I_base_trafo)
           
     
 with tab4:
     st.markdown("## Resposta em Frequência")
-    st.sidebar.markdown("### Resposta em Frequência")
-    st.sidebar.write("Impedância do Filtro, Transformador e o Equivalente Trafo∥Filtro com a frequência, inclusive inter-harmônicos.")
     hh = np.linspace(0.1, 50.1, 5001)
     hh =np.round(hh, 2)
     w = w_fund * hh
@@ -147,18 +101,15 @@ with tab5:
     tensao_eficaz_La, tensao_eficaz_Ca, tensao_eficaz_resistor, tensao_eficaz_indutor, tensao_eficaz_capacitor = funcoes.tensoes_eficazes_nos_elementos_do_filtro(v_La_inteiros, v_Ca_inteiros, v_resistor_inteiros, v_indutor_inteiros, v_capacitor_inteiros)
     corrente_eficaz_La, corrente_eficaz_Ca, corrente_eficaz_resistor, corrente_eficaz_indutor, corrente_eficaz_capacitor = funcoes.correntes_eficazes_nos_elementos_do_filtro(i_La_inteiros, i_Ca_inteiros, i_resistor_inteiros, i_indutor_inteiros, i_capacitor_inteiros)
     st.markdown("#### Corrente / Corrente Base do Transformador")
-    
-    st.sidebar.markdown("### Tensões | Correntes | Potências")
-    st.sidebar.write("Estabelece limites de ordem de corrente, tensão e potência nos elementos, em especial nos capacitores.")
 
     funcoes.grafico_corrente_trafo_e_filtro(h_inteiros, h_principal, i_trafo_inteiros, i_filtro_inteiros, i_carga_inteiros, I_base_trafo)
     i_nominal_capacitores = Q_reat_fund_filtro / (np.sqrt(3)*V_fund)
-    st.markdown("#### Correntes / Corrente Nominal do Capacitor")
+    st.markdown("#### Correntes")
     funcoes.escritas_correntes_de_fase_pu(tipo_de_filtro, corrente_eficaz_La, corrente_eficaz_resistor, corrente_eficaz_indutor, corrente_eficaz_capacitor, i_nominal_capacitores)
     funcoes.grafico_corrente_elementos_filtro(i_La_inteiros, i_Ca_inteiros, i_resistor_inteiros, i_indutor_inteiros, i_capacitor_inteiros, i_nominal_capacitores, h_principal, h_inteiros)
     
 
-    st.markdown("#### Tensão / Tensão de Fase")
+    st.markdown("#### Tensões")
     V_fund_fase = V_fund / np.sqrt(3)
     funcoes.escritas_tensoes_de_fase_pu(tipo_de_filtro, tensao_eficaz_La, tensao_eficaz_Ca, tensao_eficaz_resistor, tensao_eficaz_indutor, tensao_eficaz_capacitor, V_fund_fase)
     funcoes.grafico_tensao_elementos_filtro(h_principal, h_inteiros, v_resistor_inteiros, v_indutor_inteiros, v_capacitor_inteiros, v_barra_inteiros, V_fund_fase)
