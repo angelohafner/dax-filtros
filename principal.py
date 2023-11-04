@@ -16,11 +16,11 @@ R_filtro = 100e-3
 ##################################################
 
 
-st.title("Análise Filtros Harmônicos")
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["⚙️ Filtro", "⚡Transformador", "💾 Leitura Correntes","📈 Resposta em Frequência", "📊 Tensões | Correntes | Potências"])
+st.title("谐波滤波器分析")
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["⚙️ 滤波器", "⚡变压器", "💾 电流读数","📈 频率响应", "📊 电压 | 电流 | 功率"])
 
 with tab1:
-    st.markdown("## Filtro")
+    st.markdown("## 滤波器")
     col1_f, col2_f, col3_f = st.columns(3)
     
     with col3_f:
@@ -28,12 +28,12 @@ with tab1:
         st.image(imagem_filtroDAX, caption='', width=400)
     
     with col1_f:
-        tipo_de_filtro =            st.radio("Tipo de Filtro", ("Amortecido", "Sintonizado", "Tipo C"))
-        V_fund =              1e3 * st.number_input("Tensão em kV",             min_value=0.220,    max_value=138.0, step=0.5,   value=34.5)
-        Q_reat_fund_filtro =  1e6 * st.number_input("Reativos em MVAr",         min_value=0.001,    max_value=100.0, step=0.001, value=4.0)
-        h_principal =               st.number_input("Filtro para o harmônico",  min_value=2,        max_value=23,    step=1,     value=5)
-        dessintonia =        1e-2 * st.number_input("Dessintonia em %",         min_value=0,        max_value=10,    step=1,     value=2)
-        Q0 =                        st.number_input("Fator de Qualidade",       min_value=0.1,      max_value=140.0, step=0.1,   value=50.0)
+        tipo_de_filtro =            st.radio("过滤器类型", ("阻尼型过滤器", "谐振型过滤器", "C型过滤器"))
+        V_fund =              1e3 * st.number_input("电压（千伏） kV",             min_value=0.220,    max_value=138.0, step=0.5,   value=34.5)
+        Q_reat_fund_filtro =  1e6 * st.number_input("无功功率（兆乏） MVAr",         min_value=0.001,    max_value=100.0, step=0.001, value=4.0)
+        h_principal =               st.number_input("谐波滤波器",  min_value=2,        max_value=23,    step=1,     value=5)
+        dessintonia =        1e-2 * st.number_input("偏谐百分比 %",         min_value=0,        max_value=10,    step=1,     value=2)
+        Q0 =                        st.number_input("滤波器品质因数",       min_value=0.1,      max_value=140.0, step=0.1,   value=50.0)
     [XFILTRO_fund, R_filtro, L_filtro, C_filtro, La, Ca] = funcoes.parametros_filtro(tipo_de_filtro, h_principal, dessintonia, Q0, V_fund, Q_reat_fund_filtro, w_fund)
 
     with col2_f:
@@ -45,12 +45,12 @@ with tab1:
         funcoes.escrita_RLC_filtro(R_filtro, L_filtro, C_filtro, La, Ca, tipo_de_filtro)
         
 with tab2:
-    st.markdown("## Transformador")
+    st.markdown("## 变压器")
     col1_tr, col2_tr = st.columns(2)
     with col1_tr:
-        R_trafo_percentual = 1e-2 * st.number_input("Resistência %", min_value=0.0, max_value=20.0, step=0.5, value=0.12)
-        X_trafo_percentual = 1e-2 * st.number_input("Reatância %", min_value=1.0, max_value=20.0, step=0.5, value=6.1)
-        S_trafo_fund       = 1e6  * st.number_input('Potência Nominal em MVA: ', min_value=0.1, max_value=500., value=60.0, step=1.)
+        R_trafo_percentual = 1e-2 * st.number_input("电阻百分比 %", min_value=0.0, max_value=20.0, step=0.5, value=0.12)
+        X_trafo_percentual = 1e-2 * st.number_input("电抗百分比 %", min_value=1.0, max_value=20.0, step=0.5, value=6.1)
+        S_trafo_fund       = 1e6  * st.number_input('额定功率（兆伏安 MVA: ', min_value=0.1, max_value=500., value=60.0, step=1.)
         Z_base_trafo = V_fund**2 / S_trafo_fund
         I_base_trafo = S_trafo_fund / (np.sqrt(3) * V_fund)
         Z_traf_fund = Z_base_trafo * (R_trafo_percentual + 1j*X_trafo_percentual)
@@ -65,26 +65,26 @@ with tab2:
         st.image(imagem_trafo, caption='', width=300)
 
 with tab3:
-    st.markdown("## Conteúdo Harmônico de Corrente da Carga")
+    st.markdown("## 负载电流谐波含量")
     df_correntes = pd.read_csv("leitura_harmonicos_de_corrente.csv", header=0, dtype=np.float64)
     modulo = df_correntes['Módulo [A]']
     fase = df_correntes['Fase [Graus]']
-    nr_correntes_harm = st.selectbox('Número de Harmônicos', (1, 2, 3, 4, 5, 6))
+    nr_correntes_harm = st.selectbox('谐波数量', (1, 2, 3, 4, 5, 6))
     harm = np.zeros(nr_correntes_harm, dtype=int)
     modu = np.zeros(nr_correntes_harm)
     cols = st.columns(nr_correntes_harm)
     for k in range(nr_correntes_harm):
         ii = k
         with cols[k]:
-            harm[k] = st.number_input("Harmônico [h]",       min_value=2,   max_value=50,    value=5,     step=1,   key="h_" + str(k))
-            modu[k] = st.number_input("Corrente [A]", min_value=0.0, max_value=999.9, value=100.0/(k+1), step=1.1, key="m_" + str(k))
+            harm[k] = st.number_input("谐波 [h]",       min_value=2,   max_value=50,    value=5,     step=1,   key="h_" + str(k))
+            modu[k] = st.number_input("电流 [安] [A]", min_value=0.0, max_value=999.9, value=100.0/(k+1), step=1.1, key="m_" + str(k))
 
     modulo[harm[:]] = modu[:]
     funcoes.grafico_de_correntes_entrada(df_correntes['Ordem [h]'].to_numpy(), df_correntes['Módulo [A]'].to_numpy(), I_base_trafo)
           
     
 with tab4:
-    st.markdown("## Resposta em Frequência")
+    st.markdown("## 频率响应")
     hh = np.linspace(0.1, 50.1, 5001)
     hh =np.round(hh, 2)
     w = w_fund * hh
@@ -100,22 +100,22 @@ with tab5:
 
     tensao_eficaz_La, tensao_eficaz_Ca, tensao_eficaz_resistor, tensao_eficaz_indutor, tensao_eficaz_capacitor = funcoes.tensoes_eficazes_nos_elementos_do_filtro(v_La_inteiros, v_Ca_inteiros, v_resistor_inteiros, v_indutor_inteiros, v_capacitor_inteiros)
     corrente_eficaz_La, corrente_eficaz_Ca, corrente_eficaz_resistor, corrente_eficaz_indutor, corrente_eficaz_capacitor = funcoes.correntes_eficazes_nos_elementos_do_filtro(i_La_inteiros, i_Ca_inteiros, i_resistor_inteiros, i_indutor_inteiros, i_capacitor_inteiros)
-    st.markdown("#### Corrente / Corrente Base do Transformador")
+    st.markdown("#### 电流 / 变压器基础电流")
 
     funcoes.grafico_corrente_trafo_e_filtro(h_inteiros, h_principal, i_trafo_inteiros, i_filtro_inteiros, i_carga_inteiros, I_base_trafo)
     i_nominal_capacitores = Q_reat_fund_filtro / (np.sqrt(3)*V_fund)
-    st.markdown("#### Correntes")
+    st.markdown("#### 电流")
     funcoes.escritas_correntes_de_fase_pu(tipo_de_filtro, corrente_eficaz_La, corrente_eficaz_resistor, corrente_eficaz_indutor, corrente_eficaz_capacitor, i_nominal_capacitores)
     funcoes.grafico_corrente_elementos_filtro(i_La_inteiros, i_Ca_inteiros, i_resistor_inteiros, i_indutor_inteiros, i_capacitor_inteiros, i_nominal_capacitores, h_principal, h_inteiros)
     
 
-    st.markdown("#### Tensões")
+    st.markdown("#### 电压")
     V_fund_fase = V_fund / np.sqrt(3)
     funcoes.escritas_tensoes_de_fase_pu(tipo_de_filtro, tensao_eficaz_La, tensao_eficaz_Ca, tensao_eficaz_resistor, tensao_eficaz_indutor, tensao_eficaz_capacitor, V_fund_fase)
     funcoes.grafico_tensao_elementos_filtro(h_principal, h_inteiros, v_resistor_inteiros, v_indutor_inteiros, v_capacitor_inteiros, v_barra_inteiros, V_fund_fase)
 
     
-    st.markdown("#### Potências nos Elementos do Filtro")
+    st.markdown("#### 滤波器元件中的功率")
     p_La_inteiros, p_Ca_inteiros, p_resistor_inteiros, p_indutor_inteiros, p_capacitor_inteiros = funcoes.potencias_inteiras(v_La_inteiros, v_Ca_inteiros, v_resistor_inteiros, v_indutor_inteiros, v_capacitor_inteiros, i_La_inteiros, i_Ca_inteiros, i_resistor_inteiros, i_indutor_inteiros, i_capacitor_inteiros)
     potencia_eficaz_La, potencia_eficaz_Ca, potencia_eficaz_resistor, potencia_eficaz_indutor, potencia_eficaz_capacitor = funcoes.potencias_eficazes(v_La_inteiros, v_Ca_inteiros, v_resistor_inteiros, v_indutor_inteiros, v_capacitor_inteiros, i_La_inteiros, i_Ca_inteiros, i_resistor_inteiros, i_indutor_inteiros, i_filtro_inteiros)
     sobretensao_Angelo = np.sqrt(abs(potencia_eficaz_capacitor)/Q_reat_fund_filtro)
