@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 import xlsxwriter
 from io import BytesIO
+from traducoes import *
 from dataclasses import dataclass
 
 
@@ -66,12 +67,12 @@ class funcoes():
 
         return [R_filtro, L_filtro, C_filtro]
 
-    def selecao_da_imagem(tipo_de_filtro):
-        if tipo_de_filtro == "谐振型过滤器":
+    def selecao_da_imagem(tipo_de_filtro, idioma):
+        if tipo_de_filtro == traduzir("Filtro Sintonizado", idioma):
             imagem = Image.open('./figs/Sintonizado.png')
-        elif tipo_de_filtro == "阻尼型过滤器":
+        elif tipo_de_filtro == traduzir("Filtro Amortecido", idioma):
             imagem = Image.open('./figs/Amortecido.png')
-        elif tipo_de_filtro == "C型过滤器":  ###################################################################
+        elif tipo_de_filtro == traduzir("Filtro Tipo C", idioma):
             imagem = Image.open('./figs/Tipo_C.png')
         return imagem
 
@@ -109,16 +110,16 @@ class funcoes():
         fig.update_layout(xaxis_range=[hh_filtrar - 2, hh_filtrar + 2])
         st.plotly_chart(fig, use_container_width=True)
 
-    def impedancias(tipo_de_filtro, R_filtro, L_filtro, C_filtro, XFILTRO_fund, w, Z_trafo_fund, hh, La, Ca):
-        if tipo_de_filtro == "谐振型过滤器":
+    def impedancias(tipo_de_filtro, R_filtro, L_filtro, C_filtro, XFILTRO_fund, w, Z_trafo_fund, hh, La, Ca, idioma):
+        if tipo_de_filtro == traduzir("Filtro Sintonizado", idioma):
             Z_filtro = R_filtro + 1j * w * L_filtro + 1 / (1j * w * C_filtro)
             w_ressonancia = 1 / np.sqrt(L_filtro * C_filtro)
-        elif tipo_de_filtro == "阻尼型过滤器":
+        elif tipo_de_filtro == traduzir("Filtro Amortecido", idioma):
             Z_filtro = 1 / ((1 / R_filtro) + 1 / (1j * w * L_filtro)) + 1 / (1j * w * C_filtro)
             w_ressonancia = R_filtro / np.sqrt(L_filtro * (C_filtro * R_filtro ** 2 - L_filtro))
-        elif tipo_de_filtro == "C型过滤器":
+        elif tipo_de_filtro == traduzir("Filtro Tipo C", idioma):
             Z_LaCa_serie = 1j * w * La + 1 / (1j * w * Ca)
-            Z_LaCa_serie[np.imag(Z_LaCa_serie) == 0] = 1j * 1e-9
+            Z_LaCa_serie[np.imag(Z_LaCa_serie) == 0] = 1j * 1e-9  # Evitar divisão por zero em cálculo de impedância
             Y_RLCa_paralelo = 1 / Z_LaCa_serie + 1 / R_filtro
             Z_filtro = 1 / Y_RLCa_paralelo + 1 / (1j * w * C_filtro)
             w_ressonancia = R_filtro / np.sqrt(L_filtro * (C_filtro * R_filtro ** 2 - L_filtro))
@@ -131,7 +132,7 @@ class funcoes():
         return [Z_filtro, Z_trafo, Z_equivalente, Z_equivalenteC, X_somenteC, w_ressonancia, La, Ca]
 
     def grandezas_inteiras(hh, w, Z_trafo, Z_equivalente, Z_filtro, i_carga_inteiros, tipo_de_filtro, R_filtro,
-                           L_filtro, C_filtro, V_fund, La, Ca):
+                           L_filtro, C_filtro, V_fund, La, Ca, idioma):
         # --- somente os harmônicos inteiros
         temp = np.where(np.mod(hh, 1) == 0)[0]
         indices_h_inteiro = np.zeros(len(temp) + 1, dtype=int)
@@ -153,13 +154,14 @@ class funcoes():
         # --- tensões e correntes nos elementos do filtro
         v_capacitor_inteiros = i_filtro_inteiros * 1 / (1j * w_inteiros * C_filtro)
         i_capacitor_inteiros = i_filtro_inteiros
-        if tipo_de_filtro == '谐振型过滤器':
+        if tipo_de_filtro == traduzir("Filtro Sintonizado", idioma):
             v_resistor_inteiros = i_filtro_inteiros * R_filtro
             v_indutor_inteiros = i_filtro_inteiros * 1j * w_inteiros * L_filtro
             i_indutor_inteiros = i_filtro_inteiros
             i_resistor_inteiros = i_filtro_inteiros
 
-        elif tipo_de_filtro == '阻尼型过滤器':
+
+        elif tipo_de_filtro == traduzir("Filtro Amortecido", idioma):
             z_paralelo_RL_inteiros = 1 / (1 / R_filtro + 1 / (1j * w_inteiros * L_filtro))
             v_paralelo_RL_inteiros = i_filtro_inteiros * z_paralelo_RL_inteiros
             i_resistor_inteiros = v_paralelo_RL_inteiros / R_filtro
@@ -167,7 +169,8 @@ class funcoes():
             v_indutor_inteiros = v_paralelo_RL_inteiros
             v_resistor_inteiros = v_paralelo_RL_inteiros
 
-        elif tipo_de_filtro == 'C型过滤器':
+
+        elif tipo_de_filtro == traduzir("Filtro Tipo C", idioma):
             z_paralelo_RL_inteiros = 1 / (1 / R_filtro + 1 / (1j * w_inteiros * L_filtro))
             v_paralelo_RL_inteiros = i_filtro_inteiros * z_paralelo_RL_inteiros
             i_resistor_inteiros = v_paralelo_RL_inteiros / R_filtro
@@ -251,7 +254,7 @@ class funcoes():
         processed_data = output.getvalue()
         return processed_data
 
-    def parametros_filtro(tipo_de_filtro, h_principal, dessintonia, Q0, V_fund, Q_reat_fund_filtro, w_fund):
+    def parametros_filtro(tipo_de_filtro, h_principal, dessintonia, Q0, V_fund, Q_reat_fund_filtro, w_fund, idioma):
         XFILTRO_fund = V_fund ** 2 / Q_reat_fund_filtro
         XC_sobre_XL = (h_principal * (1 - dessintonia)) ** 2
         XC_fund = V_fund ** 2 / (Q_reat_fund_filtro * (1 - 1 / XC_sobre_XL))
@@ -260,13 +263,13 @@ class funcoes():
         L_filtro = XL_fund / w_fund
         La = 0
         Ca = 0
-        if tipo_de_filtro == "谐振型过滤器":
+        if tipo_de_filtro == traduzir("Filtro Sintonizado", idioma):
             Z0 = np.sqrt(L_filtro / C_filtro)
             R_filtro = Z0 / Q0
-        elif tipo_de_filtro == "阻尼型过滤器":
+        elif tipo_de_filtro == traduzir("Filtro Amortecido", idioma):
             Z0 = np.sqrt(L_filtro / C_filtro)
             R_filtro = Z0 * Q0
-        elif tipo_de_filtro == "C型过滤器":  ##########################################################
+        elif tipo_de_filtro == traduzir("Filtro Tipo C", idioma):  ###############################################
             Z0 = np.sqrt(L_filtro / C_filtro)
             R_filtro = Z0 * Q0
             w0 = (h_principal * (1 - dessintonia)) * w_fund
@@ -301,42 +304,44 @@ class funcoes():
             st.write("$\;\;\;\;\;\;\;\;\;\;\;\;C   = $", str(EngNumber(C_filtro)), "${\\rm{F}}$")
 
     def grafico_corrente_trafo_e_filtro(h_inteiros, h_principal, i_trafo_inteiros, i_filtro_inteiros, i_carga_inteiros,
-                                        I_base_trafo):
-        fig = go.Figure(data=[go.Bar(name='变压器', x=h_inteiros, y=abs(i_trafo_inteiros) / I_base_trafo),
-                              go.Bar(name='滤波器', x=h_inteiros, y=abs(i_filtro_inteiros) / I_base_trafo),
-                              go.Bar(name='负载', x=h_inteiros, y=abs(i_carga_inteiros) / I_base_trafo)
-                              ])
+                                        I_base_trafo, idioma):
+        fig = go.Figure(data=[
+            go.Bar(name=traduzir('Transformador', idioma), x=h_inteiros, y=abs(i_trafo_inteiros) / I_base_trafo),
+            go.Bar(name=traduzir('Filtro', idioma), x=h_inteiros, y=abs(i_filtro_inteiros) / I_base_trafo),
+            go.Bar(name=traduzir('Carga', idioma), x=h_inteiros, y=abs(i_carga_inteiros) / I_base_trafo)
+        ])
 
-        fig.update_layout(title="电流 / 变压器额定电流",
-                          xaxis_title="谐波",
-                          yaxis_title="电流 / [" + str(EngNumber(I_base_trafo)) + " A]",
-                          )
+        fig.update_layout(
+            title=traduzir("Corrente / Corrente Nominal do Transformador", idioma),
+            xaxis_title=traduzir("Harmônicas", idioma),
+            yaxis_title=traduzir("Corrente", idioma)+" / [{} A]".format(EngNumber(I_base_trafo)),
+        )
 
         fig.update(layout_xaxis_range=[0, min(3 * h_principal, np.max(h_inteiros))])
         st.plotly_chart(fig)
 
     def grafico_corrente_elementos_filtro(i_La_inteiros, i_Ca_inteiros, i_resistor_inteiros, i_indutor_inteiros,
-                                          i_capacitor_inteiros, i_nominal_capacitores, h_principal, h_inteiros):
+                                          i_capacitor_inteiros, i_nominal_capacitores, h_principal, h_inteiros, idioma):
         fig = go.Figure()
-        fig.add_trace(go.Bar(name='电阻器', x=h_inteiros, y=abs(i_resistor_inteiros) / i_nominal_capacitores))
-        fig.add_trace(go.Bar(name='电感器', x=h_inteiros, y=abs(i_indutor_inteiros) / i_nominal_capacitores))
-        fig.add_trace(go.Bar(name='电容器', x=h_inteiros, y=abs(i_capacitor_inteiros) / i_nominal_capacitores))
+        fig.add_trace(go.Bar(name=traduzir('Resistor', idioma), x=h_inteiros, y=abs(i_resistor_inteiros) / i_nominal_capacitores))
+        fig.add_trace(go.Bar(name=traduzir('Indutor', idioma), x=h_inteiros, y=abs(i_indutor_inteiros) / i_nominal_capacitores))
+        fig.add_trace(go.Bar(name=traduzir('Capacitor', idioma), x=h_inteiros, y=abs(i_capacitor_inteiros) / i_nominal_capacitores))
 
         fig.update_layout(
-            title="总电流 / 电容器额定电流",
-            xaxis_title="谐波",
-            yaxis_title="电流 / [" + str(EngNumber(i_nominal_capacitores)) + " A]",
+            title=traduzir("Corrente Total / Corrente Nominal dos Capacitores", idioma),
+            xaxis_title=traduzir("Harmônicas", idioma),
+            yaxis_title=traduzir("Corrente", idioma) +" / [" + str(EngNumber(i_nominal_capacitores)) + " A]",
         )
 
         fig.update(layout_xaxis_range=[0, min(3 * h_principal, np.max(h_inteiros))])
         st.plotly_chart(fig)
 
     def escritas_correntes_de_fase_pu(tipo_de_filtro, corrente_eficaz_La, corrente_eficaz_resistor,
-                                      corrente_eficaz_indutor, corrente_eficaz_capacitor, i_nominal_capacitores):
+                                      corrente_eficaz_indutor, corrente_eficaz_capacitor, i_nominal_capacitores, idioma):
         st.write("$I_R = $", str(EngNumber((abs(corrente_eficaz_resistor)))), "$\\rm{A}$")
-        if tipo_de_filtro == "谐振型过滤器" or tipo_de_filtro == "阻尼型过滤器":
+        if tipo_de_filtro == traduzir("Filtro Sintonizado", idioma) or traduzir(tipo_de_filtro, idioma) == "Amortecido":
             st.write("$I_L = $", str(EngNumber((abs(corrente_eficaz_indutor)))), "$\\rm{A}$")
-        elif tipo_de_filtro == "C型过滤器":
+        elif tipo_de_filtro == traduzir("Filtro Tipo C", idioma):
             st.write("$I_{La} = I_{Ca} = $", str(EngNumber((abs(corrente_eficaz_La)))), "$\\rm{A}$")
         st.write("$I_C = $", str(EngNumber((abs(corrente_eficaz_capacitor)))), "$= $", str(EngNumber((abs(corrente_eficaz_capacitor) / i_nominal_capacitores))), "$I_{C1}$")
 
@@ -367,83 +372,96 @@ class funcoes():
         st.write("$V_C = $", str(EngNumber((abs(tensao_eficaz_capacitor)))), "$\\rm{V}$", "$=$", str(EngNumber((abs(tensao_eficaz_capacitor / V_fund_fase)))), "$V_{1f}$")
 
     def grafico_tensao_elementos_filtro(h_principal, h_inteiros, v_resistor_inteiros, v_indutor_inteiros,
-                                        v_capacitor_inteiros, v_barra_inteiros, V_fund_fase):
+                                        v_capacitor_inteiros, v_barra_inteiros, V_fund_fase, idioma):
         fig = go.Figure()
-        fig.add_trace(go.Bar(name='电阻器', x=h_inteiros, y=abs(v_resistor_inteiros) / V_fund_fase))
-        fig.add_trace(go.Bar(name='电感器', x=h_inteiros, y=abs(v_indutor_inteiros) / V_fund_fase))
-        fig.add_trace(go.Bar(name='电容器', x=h_inteiros, y=abs(v_capacitor_inteiros) / V_fund_fase))
-        fig.add_trace(go.Bar(name='Geral', x=h_inteiros, y=abs(v_barra_inteiros) / V_fund_fase))
+        fig.add_trace(go.Bar(name=traduzir('Resistor', idioma), x=h_inteiros, y=abs(v_resistor_inteiros) / V_fund_fase))
+        fig.add_trace(go.Bar(name=traduzir('Indutor', idioma), x=h_inteiros, y=abs(v_indutor_inteiros) / V_fund_fase))
+        fig.add_trace(
+            go.Bar(name=traduzir('Capacitor', idioma), x=h_inteiros, y=abs(v_capacitor_inteiros) / V_fund_fase))
+        fig.add_trace(go.Bar(name=traduzir('Total', idioma), x=h_inteiros, y=abs(v_barra_inteiros) / V_fund_fase))
 
         fig.update_layout(
-            title="电压 / 相电压",
-            xaxis_title="谐波",
-            yaxis_title="电压 / [" + str(EngNumber(V_fund_fase)) + " V]",
+            title=traduzir("Tensão / Tensão de Fase", idioma),
+            xaxis_title=traduzir("Harmônicas", idioma),
+            yaxis_title=traduzir("Tensão", idioma)+" / [{} V]".format(EngNumber(V_fund_fase)),
         )
 
         fig.update(layout_xaxis_range=[0, min(3 * h_principal, np.max(h_inteiros))])
         st.plotly_chart(fig)
 
     def grafico_potencias_elementos_filtro(h_principal, h_inteiros, p_resistor_inteiros, p_indutor_inteiros,
-                                           p_capacitor_inteiros):
+                                           p_capacitor_inteiros, idioma):
         fig = go.Figure()
-        fig.add_trace(go.Bar(name='电阻器 [W]', x=h_inteiros, y=abs(p_resistor_inteiros)))
-        fig.add_trace(go.Bar(name='电感器 [VAr]', x=h_inteiros, y=abs(p_indutor_inteiros)))
-        fig.add_trace(go.Bar(name='电容器 [VAr]', x=h_inteiros, y=abs(p_capacitor_inteiros)))
+        fig.add_trace(go.Bar(name=traduzir('Resistor [W]', idioma), x=h_inteiros, y=abs(p_resistor_inteiros)))
+        fig.add_trace(go.Bar(name=traduzir('Indutor [VAr]', idioma), x=h_inteiros, y=abs(p_indutor_inteiros)))
+        fig.add_trace(go.Bar(name=traduzir('Capacitor [VAr]', idioma), x=h_inteiros, y=abs(p_capacitor_inteiros)))
 
         fig.update_layout(
-            title="滤波器元件中的功率",
-            xaxis_title="谐波",
-            yaxis_title="功率 [伏安] [VA]",
+            title=traduzir("Potência nos Elementos do Filtro", idioma),
+            xaxis_title=traduzir("Harmônicas", idioma),
+            yaxis_title=traduzir("Potência [VA]", idioma),
         )
 
         fig.update(layout_xaxis_range=[0, min(3 * h_principal, np.max(h_inteiros))])
         st.plotly_chart(fig)
 
-    def grafico_modulo_impedancia(hh, Z_filtro, Z_trafo, Z_equivalente, Z_base_trafo, h_principal):
+    def grafico_modulo_impedancia(hh, Z_filtro, Z_trafo, Z_equivalente, Z_base_trafo, h_principal, idioma):
         my_array = np.zeros((len(hh), 4))
         my_array[:, 0] = np.transpose(hh)
         my_array[:, 1] = np.transpose(abs(Z_filtro)) / Z_base_trafo
         my_array[:, 2] = np.transpose(abs(Z_trafo)) / Z_base_trafo
         my_array[:, 3] = np.transpose(abs(Z_equivalente)) / Z_base_trafo
 
-        df = pd.DataFrame(my_array, columns=['hh', '滤波器', '变压器', '等效的'])
-        fig = px.line(df, x="hh", y=['滤波器', '变压器', '等效的'],
-                      title='阻抗模值与频率的关系',
-                      labels={'hh': '谐波', "value": "模数 [单位制] [pu]", "variable": "模数 [单位制] [pu]"}, )
+        colunas = ['hh', traduzir('Filtro', idioma), traduzir('Transformador', idioma), traduzir('Equivalente', idioma)]
+        df = pd.DataFrame(my_array, columns=colunas)
+        fig = px.line(df, x="hh", y=colunas[1:],
+                      title=traduzir('Relação entre Módulo de Impedância e Frequência', idioma),
+                      labels={'hh': traduzir('Harmônica', idioma), "value": traduzir("Módulo [pu]", idioma),
+                              "variable": traduzir("Componente", idioma)})
         fig.update_layout(yaxis_range=[0, 4])
         fig.update_layout(xaxis_range=[0, 3 * h_principal])
         st.plotly_chart(fig)
+
         index_min = np.where(np.abs(Z_filtro) == np.min(np.abs(Z_filtro)))[0]
-        st.write(r'滤波器最小阻抗的谐波 $h=$', hh[index_min][0])
+        st.write(traduzir('Harmônica de Mínima Impedância do Filtro', idioma) + f" $h=$ {hh[index_min][0]}")
 
         my_array = np.zeros((len(hh), 4))
         my_array[:, 0] = np.transpose(hh)
         my_array[:, 1] = np.transpose(np.angle(Z_filtro, deg=True))
         my_array[:, 2] = np.transpose(np.angle(Z_trafo, deg=True))
         my_array[:, 3] = np.transpose(np.angle(Z_equivalente, deg=True))
-        df = pd.DataFrame(my_array, columns=['hh', '滤波器', '变压器', '等效的'])
-        fig = px.line(df, x="hh", y=['滤波器', '变压器', '等效的'],
-                      title='阻抗相位与频率关系',
-                      labels={'hh': '谐波', "value": "相位 [度] [°]", "variable": "相位 [度] [°]"}, )
+
+        df = pd.DataFrame(my_array, columns=colunas)
+        fig = px.line(df, x="hh", y=colunas[1:],
+                      title=traduzir('Relação entre Fase da Impedância e Frequência', idioma),
+                      labels={'hh': traduzir('Harmônica', idioma), "value": traduzir("Fase [°]", idioma),
+                              "variable": traduzir("Componente", idioma)})
         fig.update_layout(xaxis_range=[0, 3 * h_principal])
         st.plotly_chart(fig)
 
-    def grafico_de_correntes_entrada(xxx, yyy, I_base_trafo):
+    def grafico_de_correntes_entrada(xxx, yyy, I_base_trafo, idioma):
 
-        fig_pu = go.Figure(data=[go.Bar(name='电流谐波含量（单位制）', x=xxx, y=yyy / I_base_trafo), ])
+        fig_pu = go.Figure(data=[
+            go.Bar(name=traduzir("Conteúdo Harmônico da Corrente [pu]", idioma), x=xxx, y=yyy / I_base_trafo),
+        ])
+
         fig_pu.update_layout(
-            title="电流谐波含量（单位制）",
-            xaxis_title="谐波",
-            yaxis_title="电流 [单位制] [pu]",
+            title=traduzir("Conteúdo Harmônico da Corrente [pu]", idioma),
+            xaxis_title=traduzir("Harmônica", idioma),
+            yaxis_title=traduzir("Corrente [pu]", idioma),
         )
+
         st.plotly_chart(fig_pu)
 
         fig_A = go.Figure(data=[
-            go.Bar(name='电流谐波含量（安培）', x=xxx, y=yyy),
+            go.Bar(name=traduzir("Conteúdo Harmônico da Corrente [A]", idioma), x=xxx, y=yyy),
         ])
+
         fig_A.update_layout(
-            title="电流谐波含量（安培）",
-            xaxis_title="谐波",
-            yaxis_title="电流 [安] [A]",
+            title=traduzir("Conteúdo Harmônico da Corrente [A]", idioma),
+            xaxis_title=traduzir("Harmônica", idioma),
+            yaxis_title=traduzir("Corrente [A]", idioma),
         )
+
         st.plotly_chart(fig_A)
+
