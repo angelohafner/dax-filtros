@@ -71,7 +71,7 @@ def traduzir(texto, idioma):
             "fr": "Type de Filtre",
             "pt": "Tipo de Filtro",
         },
-        "Filtro Amortecedor": {
+        "Filtro Amortecido": {
             "en": "Damping Filter",
             "zh": "阻尼滤波器",
             "de": "Dämpfungsfilter",
@@ -79,7 +79,7 @@ def traduzir(texto, idioma):
             "es": "Filtro Amortiguador",
             "ru": "Демпфирующий Фильтр",
             "fr": "Filtre d'Amortissement",
-            "pt": "Filtro Amortecedor",
+            "pt": "Filtro Amortecido",
         },
         "Filtro Sintonizado": {
             "en": "Tuned Filter",
