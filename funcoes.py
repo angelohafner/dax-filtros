@@ -5,10 +5,10 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 import plotly.express as px
-import xlsxwriter
+# import xlsxwriter
 from io import BytesIO
 from traducoes import *
-from dataclasses import dataclass
+# from dataclasses import dataclass
 
 
 class funcoes():
@@ -293,12 +293,12 @@ class funcoes():
     #         st.sidebar.write(
     #             "Muito parecido ao Filtro Amortecido, contudo a adição de $C_a$ elimina perdas em $R$ na frequência fundamental.")
 
-    def escrita_RLC_filtro(R_filtro, L_filtro, C_filtro, La, Ca, tipo_de_filtro):
+    def escrita_RLC_filtro(R_filtro, L_filtro, C_filtro, La, Ca, tipo_de_filtro, idioma):
         st.write("$\;\;\;\;\;\;\;\;\;\;\;\;R   = $", str(EngNumber(R_filtro)), "$\\Omega$")
-        if tipo_de_filtro == "谐振型过滤器" or tipo_de_filtro == "阻尼型过滤器":
+        if tipo_de_filtro == traduzir("Filtro Amortecido", idioma) or tipo_de_filtro == traduzir("Filtro Sintonizado", idioma):
             st.write("$\;\;\;\;\;\;\;\;\;\;\;\;L   = $", str(EngNumber(L_filtro)), "${\\rm{H}}$")
             st.write("$\;\;\;\;\;\;\;\;\;\;\;\;C   = $", str(EngNumber(C_filtro)), "${\\rm{F}}$")
-        elif tipo_de_filtro == "C型过滤器":
+        elif tipo_de_filtro == traduzir("Filtro Tipo C", idioma):
             st.write("$\;\;\;\;\;\;\;\;\;\;\;\;L_a = $", str(EngNumber(La)), "${\\rm{H}}$")
             st.write("$\;\;\;\;\;\;\;\;\;\;\;\;C_a = $", str(EngNumber(Ca)), "${\\rm{F}}$")
             st.write("$\;\;\;\;\;\;\;\;\;\;\;\;C   = $", str(EngNumber(C_filtro)), "${\\rm{F}}$")

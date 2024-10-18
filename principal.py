@@ -77,7 +77,7 @@ with tab1:
         # ou seja, os fundos são retângulos de mesmo tamanho.
         st.image(imagem_tipo_de_filtro, caption='', width=250)
     with col2_f:
-        funcoes.escrita_RLC_filtro(R_filtro, L_filtro, C_filtro, La, Ca, tipo_de_filtro)
+        funcoes.escrita_RLC_filtro(R_filtro, L_filtro, C_filtro, La, Ca, tipo_de_filtro, idioma)
         
 with tab2:
     st.markdown("## " + traduzir("Transformador", idioma))
@@ -95,8 +95,8 @@ with tab2:
         Z_traf_fund = Z_base_trafo * (R_trafo_percentual + 1j*X_trafo_percentual)
         st.write("$V_{base} = $",  str(EngNumber(V_fund)), "$\\rm{V}$")
         st.write("$I_{base} = $",  str(EngNumber(I_base_trafo)), "$\\rm{A}$")
-        st.write("$Z_{base} = $",  str(EngNumber(Z_base_trafo)),"$\Omega$")
-        st.write("$R_{trafo} = $", str(EngNumber(np.real(Z_traf_fund))), "$\Omega$")
+        st.write("$Z_{base} = $",  str(EngNumber(Z_base_trafo)),"$\\Omega$")
+        st.write("$R_{trafo} = $", str(EngNumber(np.real(Z_traf_fund))), "$\\Omega$")
         st.write("$L_{trafo} = $", str(EngNumber(np.imag(Z_traf_fund)/w_fund)), "$\\rm{H}$")
 
     with col2_tr:
